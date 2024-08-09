@@ -6,6 +6,10 @@ import math
 
 from typing import List
 
+import argparse
+
+
+
 
 class KYFC: # Means 'Keep Your First Class'. Don't judge me...that's the reason for the script in the first place!
     def __init__(self) -> None:
@@ -27,7 +31,7 @@ class KYFC: # Means 'Keep Your First Class'. Don't judge me...that's the reason 
 
         self.courses_list = [['COS111', 'GST111', 'MTH111', 'PHY111', 'PHY117', 'STA111', 'CSC111', 'CSC112'], ['COS121', 'GST121', 'MTH121', 'PHY121', 'PHY128', 'CSC121', 'CSC122']]
         self.credit_hours = [[3, 2, 2, 2, 1, 3, 3, 2], [3, 2, 2, 2, 1, 3, 2]]
-        self.grades = [['A', 'B', 'A', 'A', 'A', 'A', 'A', 'B'], ['A', '', '', 'B', 'B', '', '']]
+        self.grades = [['A', 'B', 'A', 'A', 'A', 'A', 'A', 'B'], ['A', '', '', 'B', 'B', 'A', '']]
 
         self.set_grade_combinations()
 
@@ -71,7 +75,7 @@ class KYFC: # Means 'Keep Your First Class'. Don't judge me...that's the reason 
         for credit_hours, grades, courses in zip(self.credit_hours[:-1], self.grades[:-1], self.courses_list[:-1]): # We don't want the last item as it would be the current semester
             gpa = self.calculate_gpa(credit_hours, grades)
 
-            table_header = [courses.copy() + ['GPA']]
+            table_header = courses.copy() + ['GPA']
 
             table_body = [grades.copy() + [gpa]]
 
@@ -84,9 +88,24 @@ class KYFC: # Means 'Keep Your First Class'. Don't judge me...that's the reason 
         with open('cgpa.txt', 'a') as f:
             cgpa = self.calculate_cgpa(self.credit_hours[:-1], self.grades[:-1])
 
-            f.write(f'Your CGPA is {cgpa}\n\n')
+            f.write(f'Your CGPA is {cgpa} ({self.get_degree_class_by_gpa(cgpa)}) \n\n')
 
         print('Past semesters\' GPA have been exported to cgpa.txt!')
+
+    def get_degree_class_by_initials(self, class_initial: str) -> str:
+        classes = {'f': 'First Class', 'su': 'Second Class Upper', 'sl': 'Second Class Lower', 't': 'Third Class', 'p': 'Pass'}
+
+        try:
+            return classes[class_initial]
+        except KeyError as e:
+            raise e
+
+    def get_degree_class_by_gpa(self, grade_value: float) -> str:
+        for i, j in self.degree_classes.items():
+            if j[0] <= grade_value <= j[1]:
+                return self.get_degree_class_by_initials(i)
+            
+        raise ValueError('Class was not found')
     
     def export_kyfc_combinations(self, use_cgpa=True, degree_class='f') -> None:
         kyfc_grades_combinations = [] # I know I've included combinations for other classes, but no, I'm not changing it
@@ -112,14 +131,27 @@ class KYFC: # Means 'Keep Your First Class'. Don't judge me...that's the reason 
         table = tabulate(kyfc_grades_combinations, headers=table_header, tablefmt='pipe')
 
         with open('kyfc_grades.txt', 'w') as f:
-            f.writelines(['Here are some grades combinations you should anticipate if you plan on keeping your first class:\n\n', table])
+            f.write(f'Here are some grades combinations you should anticipate if you plan on keeping your {self.get_degree_class_by_initials(degree_class)}:\n\n')
+            f.write(table)
 
         print('KYFC grades have been exported to kyfc_grades.txt!')
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(prog='KYFC',
+                                     description='Generate grades combinations')
+    parser.add_argument('-c', '--use_cgpa',
+                        action='store_true',
+                        help='Use CGPA as benchmark')
+    parser.add_argument('-d', '--degree_class',
+                        choices=['f', 'su', 'sl', 't', 'p'],
+                        help='Degree class to make grades combination for',
+                        default='f')
+
+    args = parser.parse_args()
+
     kyfc = KYFC()
 
-    kyfc.export_kyfc_combinations(use_cgpa=False)
+    kyfc.export_kyfc_combinations(use_cgpa=args.use_cgpa, degree_class=args.degree_class)
 
-    # kyfc.export_cgpa()
+    kyfc.export_cgpa()

@@ -1,3 +1,5 @@
 venv/
 
-*.txt
+*grades.txt
+
+cgpa.txt
