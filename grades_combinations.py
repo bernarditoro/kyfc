@@ -9,8 +9,6 @@ from typing import List
 import argparse
 
 
-
-
 class KYFC: # Means 'Keep Your First Class'. Don't judge me...that's the reason for the script in the first place!
     def __init__(self) -> None:
         intro = """\nSo I've expanded the script (though hardcoded):
